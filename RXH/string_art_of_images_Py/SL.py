@@ -176,6 +176,7 @@ def main():
             end_pin = (start_pin + pin) % num_pins
             end_coords = pin_list[end_pin]
             if pins_too_close(start_pin, end_pin):
+                #print("close",start_pin,"and", end_pin)  #过近判断Kiyoshimo
                 continue
 
             line_coords = list(bresenham(start_coords[0], start_coords[1], end_coords[0], end_coords[1]))  
