@@ -20,3 +20,4 @@ try:
 
 except Exception as e:
     print("串口异常：",e)
+                                            
