@@ -10,10 +10,10 @@
 int ag_ser = 0;    // Servo角度存储变量
 int ag_down =75;    // Servo下降角度
 int ag_up =45;    // Servo上升角度
-int ag_up =45;    // Servo上升角度
+
 String mes; //串口string
 int num_pin = 6;//针的数量，默认6
-int array_wire[ 500 ] ;//线的list, Max5000
+int list_wire[500];//线的list, Max5000
 //int num_wire = 6;//绕线的次数，默认6
 Servo myservo;  // 定义Servo对象来控制
 
@@ -44,13 +44,10 @@ void setup(){
   pinMode(I_I, INPUT);     
 }
 
-
 void loop(){
   //一、串口接收
-  mes=String("");
-  aout=String("接收到信号为:");
+  mes = String("");
 
- 
   while (Serial.available()>0){  //接收到信号----------
   
     char data= Serial.read();
@@ -59,19 +56,18 @@ void loop(){
     
   
   if(mes!=""){  //分割数据--------------
-    //aout+=mes;
-    //Serial.println(aout);
+
     int commaPosition; 
     int cont=0; 
     commaPosition = mes.indexOf(',');//第一个逗号找出针的数量
     num_pin=mes.substring(0,commaPosition).toInt();
 
-    for(int i=0 ; i<5000;i++){array_wire[i]​=0; }//初始化
+    for(int i=0 ; i<500 ;i++){list_wire[i]=0;} //initial
     mes = mes.substring(commaPosition+1, mes.length());//挖走qian面的
     
     do{
       commaPosition = mes.indexOf(',');
-      array_wire[num_cont]​=mes.substring(0,commaPosition).toInt();
+      list_wire[cont]=mes.substring(0,commaPosition).toInt();
       mes = mes.substring(commaPosition+1, mes.length());//挖走qian面的
       cont++; 
     }
@@ -79,12 +75,12 @@ void loop(){
     //print to debug
     Serial.print("cont=");Serial.println(cont);
     Serial.print("num_pin=");Serial.println(num_pin);
-    Serial.print("array_wire=");Serial.println(array_wire);
-    }
+     }
 
 
 
-  //
+  //未知、基本操控（归零，步进走，舵机动，步进走，归零）
+  
   //
 
   step(false, Y_DIR, Y_STP, Num_round); 
