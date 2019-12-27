@@ -12,10 +12,10 @@ int ag_ser = 0;             // Servo角度存储变量
 int ag_down = 75;           // Servo下降角度
 int ag_up = 45;             // Servo上升角度
 
-String mes;         //串口string
-int num_pin = 6;    //针的数量，默认6
-int list_wire[500]; //线的list, Max5000
-
+String mes;                   //串口string
+int num_pin = 13;             //针的数量，默认13
+int list_wire[500];           //线的list, Max5000
+int flag_pattern = 1;         //图形样式
 boolean light_senser = false; //光感测器度数，有1无0
 
 //int num_wire = 6;//绕线的次数，默认6
@@ -31,15 +31,6 @@ void setup()
   //伺服电机设置
   myservo.attach(Z_WJ); // 控制线连接
   pinMode(I_I, INPUT);  //将归零光感器用到的IO管脚设置成输入
-
-  //测试数据
-  num_pin = 13;
-  int list_wire_test[13] = {0, 2, 4, 0, 1, 3, 5, 1, 2, 3, 4, 5, 0};
-  for (int i = 0; i <= 12; i++)
-  {
-    list_wire[i] = list_wire_test[i];
-  }
-  //测试数据END
 }
 
 //步进控制：dir 方向控制(f逆时针t顺时针), dirPin对应步进电机的DIR引脚，stepperPin 对应步进电机的step引脚， steps 步进的步数
@@ -58,6 +49,32 @@ void stepper(boolean dir, byte dirPin, byte stepperPin, int steps)
 
 void loop()
 {
+
+  //测试数据
+  if (flag_pattern == 1)
+  {
+    num_pin = 13;
+    int list_wire_test[13] = {0, 2, 4, 0, 1, 3, 5, 1, 2, 3, 4, 5, 0};
+  }
+  else if (flag_pattern == 2)
+  {
+    num_pin = 15;
+    int list_wire_test[15] = {0, 1, 5, 0, 1, 4, 0, 1, 3, 0, 1, 2, 0, 1, 0};
+  }
+  else
+  {
+    while (1)
+      ;
+  }
+
+  for (int i = 0; i < num_pin; i++)
+  {
+    list_wire[i] = list_wire_test[i];
+  }
+  flag_pattern = 0;
+  num_pin = 0;
+  //测试数据END
+
   /*
   //一、串口接收
   mes = String("");
@@ -112,7 +129,7 @@ void loop()
   }
   //歸零END
 
-   //绕线
+  //绕线
   int one_step = Num_round / num_pin;
   for (int i = 0; i < num_pin; i++) //一次for循环绕一个点
   {
@@ -121,6 +138,8 @@ void loop()
     stepper(true, Y_DIR, Y_STP, one_step);                                  //步进转到list_wire[i+1]前面
     myservo.write(ag_up);                                                   // 舵机up角度写入
     stepper(true, Y_DIR, Y_STP, (Num_round - 1 - list_wire[i]) * one_step); //把剩下的步数走完
+    //复位
+    /*
     while (1)                                                               //回归0点
     {
       stepper(true, Y_DIR, Y_STP, 1); //y轴电机 zheng转1step，
@@ -130,6 +149,7 @@ void loop()
         break;
       }
     }
+    */
   }
   //绕线END
 
