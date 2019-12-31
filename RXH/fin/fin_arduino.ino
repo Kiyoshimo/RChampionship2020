@@ -12,10 +12,12 @@ int ag_ser = 0;             // Servo角度存储变量
 int ag_down = 75;           // Servo下降角度
 int ag_up = 45;             // Servo上升角度
 
-String mes;                   //串口string
-int num_pin = 13;             //针的数量，默认13
+String mes;        //串口string
+int num_pin = 6;   //针的数量，默认6
+int num_wire = 13; //针的数量，默认13
+
 int list_wire[500];           //线的list, Max5000
-int flag_pattern = 1;         //图形样式
+int flag_pattern = 3;         //图形样式
 boolean light_senser = false; //光感测器度数，有1无0
 
 //int num_wire = 6;//绕线的次数，默认6
@@ -49,22 +51,44 @@ void stepper(boolean dir, byte dirPin, byte stepperPin, int steps)
 
 void loop()
 {
-
   //测试数据
   if (flag_pattern == 1)
   {
-    num_pin = 13;
+    num_pin = 6;
+    num_wire = 13;
     int list_wire_test[13] = {0, 2, 4, 0, 1, 3, 5, 1, 2, 3, 4, 5, 0};
   }
   else if (flag_pattern == 2)
   {
-    num_pin = 15;
+    num_pin = 6;
+    num_wire = 15;
     int list_wire_test[15] = {0, 1, 5, 0, 1, 4, 0, 1, 3, 0, 1, 2, 0, 1, 0};
   }
-  else
+
+  else if (flag_pattern == 3)
   {
+    num_pin = 60;
+    //num_wire = ? ? ;
+    int p_f3_i1 = 0; //第一个点
+    int p_f3_i2 = 0; //第2个点
+    int cont_f3 = 0; //计数器
     while (1)
-      ;
+    {
+      p_f3_i1++;
+      p_f3_i2 = p_f3_i1 * p_f3_i1;
+      if (p_f3_i2 > 60)
+      {
+        break;
+      }
+      else
+      {
+        list_wire_test[cont_f3] = p_f3_i1;
+        cont_f3++;
+        list_wire_test[cont_f3] = p_f3_i1;
+        cont_f3++;
+      }
+    }
+    num_wire = cont_f3 + 1;
   }
 
   for (int i = 0; i < num_pin; i++)
@@ -73,10 +97,11 @@ void loop()
   }
   flag_pattern = 0;
   num_pin = 0;
+
   //测试数据END
 
   /*
-  //一、串口接收
+  //串口接收
   mes = String("");
 
   while (Serial.available() > 0) //接收到信号----------
@@ -113,10 +138,10 @@ void loop()
     Serial.print("num_pin=");
     Serial.println(num_pin);
   }
-
+//串口接收END
   //未知、基本操控（步进归零，步进走，舵机下，步进走，舵机上，步进归零）
 */
-
+  /*
   //歸零
   while (1)
   {
@@ -128,8 +153,54 @@ void loop()
     }
   }
   //歸零END
+*/
+  //绕线(激进版本，无归零)
+  int one_step = Num_round / num_pin; //一针需要的步数
+  int p_last = 0;                     //上一个点
 
-  //绕线
+  for (int i = 0; i < num_pin; i++) //一次for循环绕一个点
+  {
+    if (((p_last - list_wire[i]) > 30) and ((p_last - list_wire[i]) <= 60)) //顺时针
+    {
+      stepper(true, Y_DIR, Y_STP, (abs(p_last - list_wire[i]) * one_step)); //步进转到list_wire[i]前面
+      myservo.write(ag_down);                                               // 舵机down角度写入
+      stepper(true, Y_DIR, Y_STP, one_step);                                //步进转到list_wire[i+1]前面
+      myservo.write(ag_up);
+      p_last = list_wire[i] + 1;
+    }
+    else if (((p_last - list_wire[i]) > 0) and ((p_last - list_wire[i]) <= 30)) //ni时针
+    {
+      stepper(false, Y_DIR, Y_STP, (abs(p_last - list_wire[i]) * one_step)); //步进转到list_wire[i]前面
+      myservo.write(ag_down);                                                // 舵机down角度写入
+      stepper(true, Y_DIR, Y_STP, one_step);                                 //步进转到list_wire[i+1]前面
+      myservo.write(ag_up);
+      p_last = list_wire[i] + 1;
+    }
+    else if (((p_last - list_wire[i]) > -30) and ((p_last - list_wire[i]) <= 0)) //shun时针
+    {
+      stepper(true, Y_DIR, Y_STP, (abs(p_last - list_wire[i]) * one_step)); //步进转到list_wire[i]前面
+      myservo.write(ag_down);                                               // 舵机down角度写入
+      stepper(true, Y_DIR, Y_STP, one_step);                                //步进转到list_wire[i+1]前面
+      myservo.write(ag_up);
+      p_last = list_wire[i] + 1;
+    }
+    else if (((p_last - list_wire[i]) > -60) and ((p_last - list_wire[i]) <= -30)) //ni时针
+    {
+      stepper(false, Y_DIR, Y_STP, (abs(p_last - list_wire[i]) * one_step)); //步进转到list_wire[i]前面
+      myservo.write(ag_down);                                                // 舵机down角度写入
+      stepper(true, Y_DIR, Y_STP, one_step);                                 //步进转到list_wire[i+1]前面
+      myservo.write(ag_up);
+      p_last = list_wire[i] + 1;
+    }
+    else
+    {
+      Serial.print("绕线(激进版本，无归零),错误");
+    }
+  }
+  //绕线(激进版本，无归零)END
+
+  /*
+  //绕线(保守版本，一针一归零)
   int one_step = Num_round / num_pin;
   for (int i = 0; i < num_pin; i++) //一次for循环绕一个点
   {
@@ -139,8 +210,8 @@ void loop()
     myservo.write(ag_up);                                                   // 舵机up角度写入
     stepper(true, Y_DIR, Y_STP, (Num_round - 1 - list_wire[i]) * one_step); //把剩下的步数走完
     //复位
-    /*
-    while (1)                                                               //回归0点
+    
+    while (1)                                                                  //回归0点
     {
       stepper(true, Y_DIR, Y_STP, 1); //y轴电机 zheng转1step，
       if (digitalRead(I_I) == 1)
@@ -149,9 +220,9 @@ void loop()
         break;
       }
     }
-    */
+    
   }
   //绕线END
-
+*/
   Serial.print("搞完了！");
 }
