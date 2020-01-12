@@ -1,0 +1,6 @@
+{
+    "port": "COM3",
+    "programmer": "AVRISP mkII",
+    "board": "arduino:avr:uno",
+    "sketch": "SteppingMotorTest_42\\SteppingMotorTest_42.ino"
+}

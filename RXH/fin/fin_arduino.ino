@@ -8,19 +8,18 @@
 #define I_I 4   //归零光感测器输入脚位
 //参数
 const int Num_round = 1200; // 走一圈步进电机的步数200*6*1 （跳线： 000全细分1 001细分1/2  010细分1/4  110细分1/8  111细分1/16）(全细分200步一圈)
-int ag_ser = 0;             // Servo角度存储变量
+int ag_ser = 45;            // Servo角度存储变量
 int ag_down = 75;           // Servo下降角度
 int ag_up = 45;             // Servo上升角度
 
 String mes;        //串口string
 int num_pin = 6;   //针的数量，默认6
-int num_wire = 13; //针的数量，默认13
+int num_wire = 13; //绕线的次数，默认13
 
 int list_wire[500];           //线的list, Max5000
-int flag_pattern = 3;         //图形样式
+int flag_pattern = 1;         //图形样式
 boolean light_senser = false; //光感测器度数，有1无0
 
-//int num_wire = 6;//绕线的次数，默认6
 Servo myservo; // 定义Servo对象来控制
 
 void setup()
@@ -52,31 +51,47 @@ void stepper(boolean dir, byte dirPin, byte stepperPin, int steps)
 void loop()
 {
   //测试数据
+
   if (flag_pattern == 1)
   {
     num_pin = 6;
     num_wire = 13;
-    int list_wire_test[13] = {0, 2, 4, 0, 1, 3, 5, 1, 2, 3, 4, 5, 0};
+    int list_wire_test[15] = {0, 2, 4, 0, 1, 3, 5, 1, 2, 3, 4, 5, 0};
+
+    for (int i = 0; i < num_pin; i++)
+    {
+      list_wire[i] = list_wire_test[i];
+    }
+    flag_pattern = 0;
+    num_pin = 0;
   }
   else if (flag_pattern == 2)
   {
     num_pin = 6;
     num_wire = 15;
     int list_wire_test[15] = {0, 1, 5, 0, 1, 4, 0, 1, 3, 0, 1, 2, 0, 1, 0};
+
+    for (int i = 0; i < num_pin; i++)
+    {
+      list_wire[i] = list_wire_test[i];
+    }
+    flag_pattern = 0;
+    num_pin = 0;
   }
 
   else if (flag_pattern == 3)
   {
     num_pin = 60;
-    //num_wire = ? ? ;
+    //num_wire = ? ? ;  //算完是15
     int p_f3_i1 = 0; //第一个点
     int p_f3_i2 = 0; //第2个点
     int cont_f3 = 0; //计数器
+    int list_wire_test[15];
     while (1)
     {
       p_f3_i1++;
       p_f3_i2 = p_f3_i1 * p_f3_i1;
-      if (p_f3_i2 > 60)
+      if (p_f3_i2 > num_pin)
       {
         break;
       }
@@ -89,14 +104,14 @@ void loop()
       }
     }
     num_wire = cont_f3 + 1;
-  }
 
-  for (int i = 0; i < num_pin; i++)
-  {
-    list_wire[i] = list_wire_test[i];
+    for (int i = 0; i < num_pin; i++)
+    {
+      list_wire[i] = list_wire_test[i];
+    }
+    flag_pattern = 0;
+    num_pin = 0;
   }
-  flag_pattern = 0;
-  num_pin = 0;
 
   //测试数据END
 
@@ -158,7 +173,7 @@ void loop()
   int one_step = Num_round / num_pin; //一针需要的步数
   int p_last = 0;                     //上一个点
 
-  for (int i = 0; i < num_pin; i++) //一次for循环绕一个点
+  for (int i = 0; i < num_pin; i++) //一次for循环7绕一个点
   {
     if (((p_last - list_wire[i]) > 30) and ((p_last - list_wire[i]) <= 60)) //顺时针
     {
