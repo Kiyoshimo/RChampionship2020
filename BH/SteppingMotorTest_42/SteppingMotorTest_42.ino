@@ -23,17 +23,53 @@ void step(boolean dir, byte dirPin, byte stepperPin, int steps)
   {
     digitalWrite(Y_STP, HIGH);
     digitalWrite(X_STP, HIGH);
-    delayMicroseconds(8000);
+    delayMicroseconds(800);
     digitalWrite(Y_STP, LOW);
-    digitalWrite(X_STP, LOW);    
-    delayMicroseconds(8000);
+    digitalWrite(X_STP, LOW);
+    delayMicroseconds(800);
   }
 }
-void go(int x1,int y1,int x2,int y2)//从x1y1到x2y2
+void go(int x1, int y1, int x2, int y2) //从x1y1到x2y2
 {
-  int d_x=x1-x2;//正数左行负数右行
-  int d_y=y1-y2;//正数上行负数下行
+  int d_x = x1 - x2;                        //正数左行负数右行，单位mm
+  int d_y = y1 - y2;                        //正数上行负数下行，单位mm
+  int d_move = sqrt(d_x * d_x + d_y * d_y); //移动距离，单位mm
+  const int speed = 30;                     //设定：1s移动30mm，对1s进行拆分，制作pwm,一个周期1000ms
+  int t_delay = 1000000 * d_move / speed;   //延迟时间，单位microsecond
+  int onegopwm = d_move * 1000;             //例如：走30mm，用时1s，拆成1000pmw，走60mm用时2s拆成2000pmw
 
+  int step_dx = 200;
+  int step_dy = 200;
+
+  digitalWrite(Y_STP, true);
+  digitalWrite(X_STP, true);
+  delay(50);
+  for (int i1 = 0; i1 < onegopwm; i1++) //一周期约1000ms
+  {
+    if (step_dx != 0)
+    {
+      if (onegopwm % step_dx == 0)
+        digitalWrite(X_STP, HIGH);
+    }
+    if (step_dy != 0)
+    {
+      if (onegopwm % step_dy == 0)
+        digitalWrite(Y_STP, HIGH);
+    }
+
+    delayMicroseconds(5000);
+    if (step_dx != 0)
+    {
+      if (onegopwm % step_dx == 0)
+        digitalWrite(X_STP, HIGH);
+    }
+    if (step_dy != 0)
+    {
+      if (onegopwm % step_dy == 0)
+        digitalWrite(Y_STP, HIGH);
+    }
+    delayMicroseconds(5000);
+  }
 }
 void setup()
 { //将步进电机用到的IO管脚设置成输出
@@ -49,16 +85,8 @@ void setup()
 void loop()
 {
 
+  go(0, 0, 0, 30);
+  delay(5000);
+
   step(false, Y_DIR, Y_STP, 200); //y轴电机 反转1圈，200步为一圈
-  step(true, X_DIR, X_STP, 200);  //y轴电机 反转1圈，200步为一圈
-  delay(1000);
-  step(false, Y_DIR, Y_STP, 200); //y轴电机 反转1圈，200步为一圈
-  step(true, X_DIR, X_STP, 200);  //y轴电机 反转1圈，200步为一圈
-  delay(1000);
-  step(false, Y_DIR, Y_STP, 200); //y轴电机 反转1圈，200步为一圈
-  step(true, X_DIR, X_STP, 200);  //y轴电机 反转1圈，200步为一圈
-  delay(1000);
-  step(false, Y_DIR, Y_STP, 200); //y轴电机 反转1圈，200步为一圈
-  step(true, X_DIR, X_STP, 200);  //y轴电机 反转1圈，200步为一圈
-  delay(1000);
 }
