@@ -5,7 +5,9 @@
 #define Y_DIR 6 //y轴 步进电机方向控制脚位
 #define Y_STP 3 //y轴 步进控制脚位
 #define Z_WJ 2  //z轴 伺服马达输出脚位
+#define Z_LED 1 //z轴 测试用led输出脚位
 #define I_I 4   //归零光感测器输入脚位
+
 //参数
 const int Num_round = 1200; // 走一圈步进电机的步数200*6*1 （跳线： 000全细分1 001细分1/2  010细分1/4  110细分1/8  111细分1/16）(全细分200步一圈)
 int ag_ser = 45;            // Servo角度存储变量
@@ -14,9 +16,10 @@ int ag_up = 45;             // Servo上升角度
 
 String mes;        //串口string
 int num_pin = 6;   //针的数量，默认6
-int num_wire = 13; //绕线的次数，默认13
+int num_wire = 15; //绕线的次数，默认15
 
-int list_wire[500];           //线的list, Max5000
+int list_wire[15] = {0, 1, 5, 0, 1, 4, 0, 1, 3, 0, 1, 2, 0, 1, 0};
+//int list_wire[500];           //线的list, Max5000
 int flag_pattern = 1;         //图形样式
 boolean light_senser = false; //光感测器度数，有1无0
 
@@ -30,8 +33,10 @@ void setup()
   pinMode(EN, OUTPUT);
   digitalWrite(EN, LOW);
   //伺服电机设置
-  myservo.attach(Z_WJ); // 控制线连接
-  pinMode(I_I, INPUT);  //将归零光感器用到的IO管脚设置成输入
+  myservo.attach(Z_WJ);   // 控制线连接
+  pinMode(I_I, INPUT);    //将归零光感器用到的IO管脚设置成输入
+  pinMode(Z_LED, OUTPUT); //测试用led
+  Serial.begin(9600);     //设置串口波特率9600
 }
 
 //步进控制：dir 方向控制(f逆时针t顺时针), dirPin对应步进电机的DIR引脚，stepperPin 对应步进电机的step引脚， steps 步进的步数
@@ -42,16 +47,16 @@ void stepper(boolean dir, byte dirPin, byte stepperPin, int steps)
   for (int i = 0; i < steps; i++)
   {
     digitalWrite(stepperPin, HIGH);
-    delayMicroseconds(800);
+    delayMicroseconds(2000);
     digitalWrite(stepperPin, LOW);
-    delayMicroseconds(800);
+    delayMicroseconds(2000);
   }
 }
 
 void loop()
 {
   //测试数据
-
+  /*
   if (flag_pattern == 1)
   {
     num_pin = 6;
@@ -112,7 +117,7 @@ void loop()
     flag_pattern = 0;
     num_pin = 0;
   }
-
+*/
   //测试数据END
 
   /*
@@ -169,48 +174,102 @@ void loop()
   }
   //歸零END
 */
+
   //绕线(激进版本，无归零)
   int one_step = Num_round / num_pin; //一针需要的步数
   int p_last = 0;                     //上一个点
 
-  for (int i = 0; i < num_pin; i++) //一次for循环7绕一个点
+  for (int i = 0; i < num_wire; i++) //一次for循环7绕一个点
   {
-    if (((p_last - list_wire[i]) > 30) and ((p_last - list_wire[i]) <= 60)) //顺时针
+    Serial.print("tage:");
+    Serial.println(list_wire[i]);
+    digitalWrite(Z_LED, LOW);
+    if (p_last == list_wire[i]) //不用动
     {
-      stepper(true, Y_DIR, Y_STP, (abs(p_last - list_wire[i]) * one_step)); //步进转到list_wire[i]前面
-      myservo.write(ag_down);                                               // 舵机down角度写入
-      stepper(true, Y_DIR, Y_STP, one_step);                                //步进转到list_wire[i+1]前面
-      myservo.write(ag_up);
-      p_last = list_wire[i] + 1;
-    }
-    else if (((p_last - list_wire[i]) > 0) and ((p_last - list_wire[i]) <= 30)) //ni时针
-    {
+      Serial.print("from ");
+      Serial.print(p_last);
+      Serial.print("to ");
+      Serial.print(list_wire[i]);
+      Serial.println("by stop");
       stepper(false, Y_DIR, Y_STP, (abs(p_last - list_wire[i]) * one_step)); //步进转到list_wire[i]前面
       myservo.write(ag_down);                                                // 舵机down角度写入
-      stepper(true, Y_DIR, Y_STP, one_step);                                 //步进转到list_wire[i+1]前面
+      delay(5000);
+      Serial.println("step1");
+      digitalWrite(Z_LED, HIGH);              //测试
+      stepper(false, Y_DIR, Y_STP, one_step); //步进转到list_wire[i+1]前面
       myservo.write(ag_up);
       p_last = list_wire[i] + 1;
-    }
-    else if (((p_last - list_wire[i]) > -30) and ((p_last - list_wire[i]) <= 0)) //shun时针
+    }                                                                                     //测试
+    else if (((p_last - list_wire[i]) > num_pin / 2) and ((p_last - list_wire[i]) <= 60)) //顺时针
     {
-      stepper(true, Y_DIR, Y_STP, (abs(p_last - list_wire[i]) * one_step)); //步进转到list_wire[i]前面
-      myservo.write(ag_down);                                               // 舵机down角度写入
-      stepper(true, Y_DIR, Y_STP, one_step);                                //步进转到list_wire[i+1]前面
-      myservo.write(ag_up);
-      p_last = list_wire[i] + 1;
-    }
-    else if (((p_last - list_wire[i]) > -60) and ((p_last - list_wire[i]) <= -30)) //ni时针
-    {
+      Serial.print("from ");
+      Serial.print(p_last);
+      Serial.print("to ");
+      Serial.print(list_wire[i]);
+      Serial.println("by shun1");
       stepper(false, Y_DIR, Y_STP, (abs(p_last - list_wire[i]) * one_step)); //步进转到list_wire[i]前面
       myservo.write(ag_down);                                                // 舵机down角度写入
-      stepper(true, Y_DIR, Y_STP, one_step);                                 //步进转到list_wire[i+1]前面
+      delay(5000);
+      Serial.println("step1");
+      digitalWrite(Z_LED, HIGH);              //测试
+      stepper(false, Y_DIR, Y_STP, one_step); //步进转到list_wire[i+1]前面
+      myservo.write(ag_up);
+      p_last = list_wire[i] + 1;
+    }
+    else if (((p_last - list_wire[i]) > 0) and ((p_last - list_wire[i]) <= (num_pin / 2))) //ni时针
+    {
+      Serial.print("from ");
+      Serial.print(p_last);
+      Serial.print("to ");
+      Serial.print(list_wire[i]);
+      Serial.println("by ni2");
+      stepper(true, Y_DIR, Y_STP, (abs(p_last - list_wire[i]) * one_step)); //步进转到list_wire[i]前面
+      myservo.write(ag_down);                                               // 舵机down角度写入
+      delay(5000);
+      Serial.println("step1");
+      digitalWrite(Z_LED, HIGH);              //测试
+      stepper(false, Y_DIR, Y_STP, one_step); //步进转到list_wire[i+1]前面
+      myservo.write(ag_up);
+      p_last = list_wire[i] + 1;
+    }
+    else if (((p_last - list_wire[i]) > -(num_pin / 2)) and ((p_last - list_wire[i]) <= 0)) //shun时针
+    {
+      Serial.print("from ");
+      Serial.print(p_last);
+      Serial.print("to ");
+      Serial.print(list_wire[i]);
+      Serial.println("by shun3");
+      stepper(false, Y_DIR, Y_STP, (abs(p_last - list_wire[i]) * one_step)); //步进转到list_wire[i]前面
+      myservo.write(ag_down);                                                // 舵机down角度写入
+      delay(5000);
+      Serial.println("step1");
+      digitalWrite(Z_LED, HIGH);              //测试
+      stepper(false, Y_DIR, Y_STP, one_step); //步进转到list_wire[i+1]前面
+      myservo.write(ag_up);
+      p_last = list_wire[i] + 1;
+    }
+    else if (((p_last - list_wire[i]) > -60) and ((p_last - list_wire[i]) <= -(num_pin / 2))) //ni时针
+    {
+      Serial.print("from ");
+      Serial.print(p_last);
+      Serial.print("to ");
+      Serial.print(list_wire[i]);
+      Serial.println("by ni4");
+      stepper(true, Y_DIR, Y_STP, (abs(p_last - list_wire[i]) * one_step)); //步进转到list_wire[i]前面
+      myservo.write(ag_down);                                               // 舵机down角度写入
+      delay(5000);
+      Serial.println("step1");
+      digitalWrite(Z_LED, HIGH);              //测试
+      stepper(false, Y_DIR, Y_STP, one_step); //步进转到list_wire[i+1]前面
       myservo.write(ag_up);
       p_last = list_wire[i] + 1;
     }
     else
     {
-      Serial.print("绕线(激进版本，无归零),错误");
+      Serial.print("error");
     }
+    myservo.write(ag_up);
+    delay(500);
   }
   //绕线(激进版本，无归零)END
 
@@ -239,5 +298,7 @@ void loop()
   }
   //绕线END
 */
-  Serial.print("搞完了！");
+  Serial.print("fin");
+  while (1)
+    ;
 }

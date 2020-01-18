@@ -13,18 +13,15 @@ void step(boolean dir, byte dirPin, byte stepperPin, int steps)
 {
   digitalWrite(dirPin, dir);
   delay(50);
-  /*
+
   for (int i = 0; i < steps; i++) {
     digitalWrite(stepperPin, HIGH);
-    delayMicroseconds(800);  
+    delayMicroseconds(2000);  
     digitalWrite(stepperPin, LOW);
-    delayMicroseconds(800);  
+    delayMicroseconds(2000);  
   }
-  */
-  digitalWrite(stepperPin, HIGH);
-    delayMicroseconds(800);  
-    digitalWrite(stepperPin, LOW);
-    delayMicroseconds(800);  
+  
+ 
 }
 void setup(){//将步进电机用到的IO管脚设置成输出
   pinMode(X_DIR, OUTPUT); pinMode(X_STP, OUTPUT);   pinMode(Y_DIR, OUTPUT); pinMode(Y_STP, OUTPUT);   pinMode(Z_DIR, OUTPUT); pinMode(Z_STP, OUTPUT);
@@ -35,8 +32,6 @@ void loop(){
  
   step(false, Y_DIR, Y_STP, 200); //y轴电机 反转1圈，200步为一圈
   step(false, X_DIR, X_STP, 200); //y轴电机 反转1圈，200步为一圈
-  delay(1000);
-  step(true, Y_DIR, Y_STP, 200); //y轴电机 反转1圈，200步为一圈
-  step(true, X_DIR, X_STP, 200); //y轴电机 反转1圈，200步为一圈
+
   delay(1000);
 }
