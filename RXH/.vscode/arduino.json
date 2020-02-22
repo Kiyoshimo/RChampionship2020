@@ -1,0 +1,5 @@
+{
+    "programmer": "AVRISP mkII",
+    "board": "arduino:avr:uno",
+    "sketch": "fin\\fin_arduino.ino"
+}
