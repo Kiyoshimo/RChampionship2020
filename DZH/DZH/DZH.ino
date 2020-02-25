@@ -7,14 +7,14 @@
 #define Y_DIR 6        //y轴步进电机方向控制
 #define X_STP 2        //x轴步进控制
 #define Y_STP 3        //y轴步进控制
-#define X_BUTTON 4     //x轴微动开关
-#define Y_BUTTON 7     //y轴微动开关
 #define angle_load 220 //装填角度
 #define angle_fire 320 //释放角度
 #define gap 20 //珠子的间距
+
+#define X_BUTTON A0 //x轴微动开关
+#define Y_BUTTON A1 //y轴微动开关
 // 默认地址 0x40
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
-
 
 //图案1：心形
 int PatternHeart[19][19] = {
@@ -38,6 +38,20 @@ int PatternHeart[19][19] = {
 , -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 
 , -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
 };
+
+
+int PatternL[10][10] = {
+-1, -1, -1, -1, 00, -1, -1, -1, -1, -1,
+-1, -1, -1, -1, 00, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, 00, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, 00, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, 00, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, 00, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, 00, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, 00, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, 00, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, 00, 00, 00, -1, -1, -1,  };
+
 
 //图案2：足球
 int PatternSoccer[100][100] = { 
@@ -146,8 +160,7 @@ int PatternSoccer[100][100] = {
 void setup()
 { //将步进电机用到的IO管脚设置成输出
   //按钮与stepper初始化
-  pinMode(X_BUTTON, INPUT_PULLUP); //按钮接内部上拉电阻；
-  pinMode(Y_BUTTON, INPUT_PULLUP); //按钮接内部上拉电阻；
+
   pinMode(X_DIR, OUTPUT);
   pinMode(X_STP, OUTPUT);
   pinMode(Y_DIR, OUTPUT);
@@ -232,24 +245,58 @@ void MoveY(int length)
 //初始化
 void Init0()
 {
-  while (analogRead(X_BUTTON) <= 800) //微动开关
-  {
-    MoveX(-10);
-    Serial.println("X_Init0");
+    int pasx=0;
+    int pasy = 0;
+    while (1) //微动开关
+    {
+        int bk = analogRead(A1);
+        if (bk >= 1000)
+        {
+            pasx++;
+            if (pasx >= 10)
+            {
+                break;
+            }
+            continue;
+        }
+        else
+        {pasx=0;}
+
+        
+        Serial.println(bk);
+        MoveX(-3);
+      
   }
-  while (analogRead(Y_BUTTON) <= 800)
+  Serial.println("X_Init0");
+  while (1) //微动开关
   {
-    MoveY(-10);
-    Serial.println("y_Init0");
+      int bk = analogRead(A0);
+      if (bk >= 1000)
+      {
+          pasy++;
+          if (pasy >= 10)
+          {
+              break;
+          }
+          continue;
+      }
+      else
+      {
+          pasy = 0;
+      }
+
+      Serial.println(bk);
+      MoveY(-3);
   }
+  Serial.println("y_Init0");
 }
 
 //servo and stepping test
 void Test1()
 {
-  MoveX(20);
+  MoveX(25);
   BallDrop(0);
-  MoveY(20);
+  MoveY(25);
   BallDrop(1);
   MoveX(-20);
   BallDrop(2);
@@ -261,7 +308,7 @@ void Test1()
 void loop()
 {
 
-  //Init0();
+  Init0();
   Test1();
 
   int num = sizeof(PatternHeart) / sizeof(PatternHeart[0][0]);
